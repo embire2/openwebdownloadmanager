@@ -1,264 +1,181 @@
 const { EventEmitter } = require('events');
-const axios = require('axios');
-const fs = require('fs');
+const { DownloaderHelper } = require('node-downloader-helper');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const Store = require('electron-store');
+
+const store = new Store();
 
 class DownloadManager extends EventEmitter {
   constructor() {
     super();
     this.downloads = new Map();
-    this.activeConnections = new Map();
+    this.settings = store.get('settings', {
+      maxConnections: 10,
+      downloadPath: require('electron').app.getPath('downloads'),
+      monitoredFileTypes: {
+        documents: true,
+        compressed: true,
+        programs: true,
+        videos: true,
+        music: true,
+        images: true
+      }
+    });
+  }
+
+  updateMonitoredTypes(monitoredFileTypes) {
+    this.settings.monitoredFileTypes = monitoredFileTypes;
+  }
+
+  shouldHandleFileType(fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    const fileCategories = {
+      documents: ['pdf', 'doc', 'docx', 'txt', 'odt', 'rtf', 'xls', 'xlsx', 'ppt', 'pptx'],
+      compressed: ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'],
+      programs: ['exe', 'msi', 'dmg', 'deb', 'rpm', 'appimage'],
+      videos: ['mp4', 'avi', 'mkv', 'mov', 'wmv', 'flv', 'webm'],
+      music: ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a'],
+      images: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico']
+    };
+
+    for (const [category, extensions] of Object.entries(fileCategories)) {
+      if (this.settings.monitoredFileTypes[category] && extensions.includes(ext)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   async addDownload(downloadInfo) {
-    const downloadId = uuidv4();
-    
     try {
-      // Get file info
-      const response = await axios.head(downloadInfo.url);
-      const contentLength = parseInt(response.headers['content-length'] || 0);
-      const acceptRanges = response.headers['accept-ranges'] === 'bytes';
+      const downloadId = uuidv4();
+      const { url, fileName, connections = 10, downloadPath = this.settings.downloadPath } = downloadInfo;
       
-      const download = {
+      // Extract filename from URL if not provided
+      const finalFileName = fileName || path.basename(new URL(url).pathname) || 'download';
+      
+      // Check if we should handle this file type
+      if (!this.shouldHandleFileType(finalFileName)) {
+        return {
+          success: false,
+          error: 'File type not monitored'
+        };
+      }
+      
+      const dl = new DownloaderHelper(url, downloadPath, {
+        fileName: finalFileName,
+        retry: { maxRetries: 5, delay: 3000 },
+        removeOnStop: true,
+        removeOnFail: true,
+        override: true,
+        httpRequestOptions: {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        }
+      });
+
+      const downloadItem = {
         id: downloadId,
-        url: downloadInfo.url,
-        fileName: downloadInfo.fileName || this.extractFileName(downloadInfo.url),
-        filePath: path.join(downloadInfo.downloadPath, downloadInfo.fileName || this.extractFileName(downloadInfo.url)),
-        size: contentLength,
+        url,
+        fileName: finalFileName,
+        filePath: path.join(downloadPath, finalFileName),
+        size: 0,
         downloaded: 0,
-        status: 'pending',
-        speed: 0,
         progress: 0,
-        connections: downloadInfo.connections || 10,
-        supportsRange: acceptRanges,
+        speed: 0,
+        status: 'downloading',
+        connections,
         startTime: Date.now(),
-        chunks: []
+        downloader: dl
       };
 
-      this.downloads.set(downloadId, download);
-      
-      // Start download immediately
-      this.startDownload(downloadId);
-      
-      return { success: true, downloadId, download };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  }
+      this.downloads.set(downloadId, downloadItem);
 
-  async startDownload(downloadId) {
-    const download = this.downloads.get(downloadId);
-    if (!download) return;
-
-    download.status = 'downloading';
-    download.startTime = Date.now();
-
-    if (download.supportsRange && download.size > 0) {
-      // Multi-connection download
-      await this.startMultiConnectionDownload(downloadId);
-    } else {
-      // Single connection download
-      await this.startSingleConnectionDownload(downloadId);
-    }
-  }
-
-  async startMultiConnectionDownload(downloadId) {
-    const download = this.downloads.get(downloadId);
-    const chunkSize = Math.ceil(download.size / download.connections);
-    const chunks = [];
-    const connections = [];
-
-    // Create temporary directory for chunks
-    const tempDir = path.join(path.dirname(download.filePath), `.${download.id}_temp`);
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
-
-    for (let i = 0; i < download.connections; i++) {
-      const start = i * chunkSize;
-      const end = Math.min(start + chunkSize - 1, download.size - 1);
-      
-      chunks.push({
-        index: i,
-        start,
-        end,
-        downloaded: 0,
-        filePath: path.join(tempDir, `chunk_${i}`)
+      // Set up event handlers
+      dl.on('download', (downloadInfo) => {
+        downloadItem.size = parseInt(downloadInfo.totalSize) || 0;
       });
-    }
 
-    download.chunks = chunks;
-
-    // Start all connections
-    for (const chunk of chunks) {
-      connections.push(this.downloadChunk(downloadId, chunk));
-    }
-
-    this.activeConnections.set(downloadId, connections);
-
-    try {
-      await Promise.all(connections);
-      await this.mergeChunks(downloadId);
-      download.status = 'completed';
-      this.emit('completed', downloadId);
-    } catch (error) {
-      download.status = 'error';
-      download.error = error.message;
-      this.emit('error', downloadId, error.message);
-    }
-  }
-
-  async downloadChunk(downloadId, chunk) {
-    const download = this.downloads.get(downloadId);
-    
-    const response = await axios({
-      method: 'GET',
-      url: download.url,
-      headers: {
-        'Range': `bytes=${chunk.start + chunk.downloaded}-${chunk.end}`
-      },
-      responseType: 'stream'
-    });
-
-    const writer = fs.createWriteStream(chunk.filePath, { flags: 'a' });
-    
-    return new Promise((resolve, reject) => {
-      let downloaded = chunk.downloaded;
-      
-      response.data.on('data', (data) => {
-        downloaded += data.length;
-        chunk.downloaded = downloaded;
-        
-        // Update total progress
-        const totalDownloaded = download.chunks.reduce((sum, c) => sum + c.downloaded, 0);
-        download.downloaded = totalDownloaded;
-        download.progress = (totalDownloaded / download.size) * 100;
-        
-        // Calculate speed
-        const elapsedTime = (Date.now() - download.startTime) / 1000;
-        download.speed = totalDownloaded / elapsedTime;
-        
+      dl.on('progress', (stats) => {
+        downloadItem.downloaded = stats.downloaded;
+        downloadItem.progress = stats.progress;
+        downloadItem.speed = stats.speed;
         this.emit('progress', downloadId, {
-          downloaded: totalDownloaded,
-          total: download.size,
-          progress: download.progress,
-          speed: download.speed
+          downloaded: stats.downloaded,
+          progress: stats.progress,
+          speed: stats.speed,
+          size: downloadItem.size
         });
       });
 
-      response.data.on('end', () => {
-        writer.end();
-        resolve();
+      dl.on('end', () => {
+        downloadItem.status = 'completed';
+        downloadItem.progress = 100;
+        this.emit('completed', downloadId);
       });
 
-      response.data.on('error', (error) => {
-        writer.end();
-        reject(error);
+      dl.on('error', (err) => {
+        downloadItem.status = 'error';
+        downloadItem.error = err.message;
+        this.emit('error', downloadId, err.message);
       });
 
-      writer.on('error', reject);
-      
-      response.data.pipe(writer);
-    });
-  }
+      // Start download
+      dl.start().catch(err => {
+        downloadItem.status = 'error';
+        downloadItem.error = err.message;
+        this.emit('error', downloadId, err.message);
+      });
 
-  async mergeChunks(downloadId) {
-    const download = this.downloads.get(downloadId);
-    const writeStream = fs.createWriteStream(download.filePath);
-
-    for (const chunk of download.chunks) {
-      const chunkData = fs.readFileSync(chunk.filePath);
-      writeStream.write(chunkData);
-      fs.unlinkSync(chunk.filePath); // Clean up chunk file
+      return {
+        success: true,
+        downloadId,
+        download: {
+          id: downloadId,
+          url,
+          fileName: finalFileName,
+          size: 0,
+          downloaded: 0,
+          progress: 0,
+          speed: 0,
+          status: 'downloading',
+          connections
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
     }
-
-    writeStream.end();
-
-    // Clean up temp directory
-    const tempDir = path.join(path.dirname(download.filePath), `.${download.id}_temp`);
-    fs.rmdirSync(tempDir);
   }
 
-  async startSingleConnectionDownload(downloadId) {
+  async pauseDownload(downloadId) {
     const download = this.downloads.get(downloadId);
-    
-    const response = await axios({
-      method: 'GET',
-      url: download.url,
-      responseType: 'stream'
-    });
-
-    const writer = fs.createWriteStream(download.filePath);
-    
-    let downloaded = 0;
-    
-    response.data.on('data', (chunk) => {
-      downloaded += chunk.length;
-      download.downloaded = downloaded;
-      download.progress = download.size ? (downloaded / download.size) * 100 : 0;
-      
-      const elapsedTime = (Date.now() - download.startTime) / 1000;
-      download.speed = downloaded / elapsedTime;
-      
-      this.emit('progress', downloadId, {
-        downloaded,
-        total: download.size,
-        progress: download.progress,
-        speed: download.speed
-      });
-    });
-
-    response.data.on('end', () => {
-      download.status = 'completed';
-      this.emit('completed', downloadId);
-    });
-
-    response.data.on('error', (error) => {
-      download.status = 'error';
-      download.error = error.message;
-      this.emit('error', downloadId, error.message);
-    });
-
-    response.data.pipe(writer);
-  }
-
-  pauseDownload(downloadId) {
-    const download = this.downloads.get(downloadId);
-    if (download && download.status === 'downloading') {
+    if (download && download.downloader) {
+      await download.downloader.pause();
       download.status = 'paused';
-      // Cancel active connections
-      const connections = this.activeConnections.get(downloadId);
-      if (connections) {
-        // Implementation for canceling axios requests
-      }
       return true;
     }
     return false;
   }
 
-  resumeDownload(downloadId) {
+  async resumeDownload(downloadId) {
     const download = this.downloads.get(downloadId);
-    if (download && download.status === 'paused') {
-      this.startDownload(downloadId);
+    if (download && download.downloader) {
+      await download.downloader.resume();
+      download.status = 'downloading';
       return true;
     }
     return false;
   }
 
-  cancelDownload(downloadId) {
+  async cancelDownload(downloadId) {
     const download = this.downloads.get(downloadId);
-    if (download) {
-      download.status = 'cancelled';
-      // Clean up files
-      if (fs.existsSync(download.filePath)) {
-        fs.unlinkSync(download.filePath);
-      }
-      // Clean up chunks
-      const tempDir = path.join(path.dirname(download.filePath), `.${download.id}_temp`);
-      if (fs.existsSync(tempDir)) {
-        fs.rmSync(tempDir, { recursive: true });
-      }
+    if (download && download.downloader) {
+      await download.downloader.stop();
       this.downloads.delete(downloadId);
       return true;
     }
@@ -266,13 +183,23 @@ class DownloadManager extends EventEmitter {
   }
 
   getDownloads() {
-    return Array.from(this.downloads.values());
-  }
-
-  extractFileName(url) {
-    const urlPath = new URL(url).pathname;
-    const fileName = path.basename(urlPath);
-    return fileName || `download_${Date.now()}`;
+    const downloads = [];
+    for (const [id, download] of this.downloads) {
+      downloads.push({
+        id,
+        url: download.url,
+        fileName: download.fileName,
+        filePath: download.filePath,
+        size: download.size,
+        downloaded: download.downloaded,
+        progress: download.progress,
+        speed: download.speed,
+        status: download.status,
+        connections: download.connections,
+        error: download.error
+      });
+    }
+    return downloads;
   }
 }
 

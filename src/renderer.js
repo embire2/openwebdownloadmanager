@@ -4,7 +4,8 @@ const fileCategories = {
     compressed: ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'],
     programs: ['exe', 'msi', 'dmg', 'deb', 'rpm', 'appimage'],
     videos: ['mp4', 'avi', 'mkv', 'mov', 'wmv', 'flv', 'webm'],
-    music: ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a']
+    music: ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a'],
+    images: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico']
 };
 
 // State
@@ -100,6 +101,18 @@ function setupIPCListeners() {
     
     window.electronAPI.onShowBatchDownload(() => {
         // Show batch download modal
+    });
+    
+    window.electronAPI.onShowAbout(() => {
+        showAboutModal();
+    });
+    
+    window.electronAPI.onShowChangelog(() => {
+        showChangelogModal();
+    });
+    
+    window.electronAPI.onUpdateAvailable((info) => {
+        showUpdateModal(info);
     });
 }
 
@@ -342,12 +355,54 @@ function closeSettingsModal() {
     document.getElementById('settings-modal').classList.remove('show');
 }
 
+function showAboutModal() {
+    document.getElementById('about-modal').classList.add('show');
+}
+
+function closeAboutModal() {
+    document.getElementById('about-modal').classList.remove('show');
+}
+
+function showChangelogModal() {
+    document.getElementById('changelog-modal').classList.add('show');
+}
+
+function closeChangelogModal() {
+    document.getElementById('changelog-modal').classList.remove('show');
+}
+
+function showUpdateModal(info) {
+    document.getElementById('update-version').textContent = info.version;
+    document.getElementById('update-notes').innerHTML = info.releaseNotes;
+    document.getElementById('update-modal').classList.add('show');
+}
+
+function closeUpdateModal() {
+    document.getElementById('update-modal').classList.remove('show');
+}
+
+function downloadUpdate() {
+    // Open download URL in browser
+    window.open('https://software.openweb.co.za/odm/', '_blank');
+    closeUpdateModal();
+}
+
 function updateSettingsUI() {
     document.getElementById('max-connections').value = settings.maxConnections || 10;
     document.getElementById('default-download-path').value = settings.downloadPath || '';
     document.getElementById('auto-start').checked = settings.autoStart !== false;
     document.getElementById('sound-notification').checked = settings.soundNotification !== false;
     document.getElementById('browser-integration').checked = settings.browserIntegration !== false;
+    
+    // Update monitored file types
+    if (settings.monitoredFileTypes) {
+        Object.keys(settings.monitoredFileTypes).forEach(type => {
+            const checkbox = document.getElementById(`monitor-${type}`);
+            if (checkbox) {
+                checkbox.checked = settings.monitoredFileTypes[type];
+            }
+        });
+    }
 }
 
 async function addDownload() {
@@ -392,12 +447,18 @@ async function selectDefaultPath() {
 }
 
 async function saveSettings() {
+    const monitoredFileTypes = {};
+    ['documents', 'compressed', 'programs', 'videos', 'music', 'images'].forEach(type => {
+        monitoredFileTypes[type] = document.getElementById(`monitor-${type}`).checked;
+    });
+    
     const newSettings = {
         maxConnections: parseInt(document.getElementById('max-connections').value),
         downloadPath: document.getElementById('default-download-path').value,
         autoStart: document.getElementById('auto-start').checked,
         soundNotification: document.getElementById('sound-notification').checked,
-        browserIntegration: document.getElementById('browser-integration').checked
+        browserIntegration: document.getElementById('browser-integration').checked,
+        monitoredFileTypes
     };
     
     await window.electronAPI.saveSettings(newSettings);
@@ -454,3 +515,8 @@ async function stopAllDownloads() {
         }
     }
 }
+
+// Get app version for about modal
+window.electronAPI.getAppVersion().then(version => {
+    document.getElementById('app-version').textContent = version;
+});

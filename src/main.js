@@ -1,13 +1,16 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray, shell, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, Tray, shell, dialog, protocol } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const { DownloadManager } = require('./downloadManager');
+const { autoUpdater } = require('./autoUpdater');
+const { installBrowserExtensions } = require('./extensionInstaller');
 
 const store = new Store();
 const downloadManager = new DownloadManager();
 
 let mainWindow;
 let tray;
+let isQuitting = false;
 
 // Enable live reload for Electron
 if (process.argv.includes('--dev')) {
@@ -41,6 +44,15 @@ function createWindow() {
   // Set up menu
   createMenu();
 
+  // Handle window close - minimize to tray instead
+  mainWindow.on('close', (event) => {
+    if (!isQuitting) {
+      event.preventDefault();
+      mainWindow.hide();
+      return false;
+    }
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -61,6 +73,12 @@ function createWindow() {
   ipcMain.on('window-close', () => {
     mainWindow.hide();
   });
+
+  // Check for first run or update
+  checkFirstRunOrUpdate();
+  
+  // Check for updates
+  autoUpdater.checkForUpdates();
 }
 
 function createTray() {
@@ -76,7 +94,7 @@ function createTray() {
     {
       label: 'Quit',
       click: () => {
-        app.isQuiting = true;
+        isQuitting = true;
         app.quit();
       }
     }
@@ -113,7 +131,7 @@ function createMenu() {
         {
           label: 'Exit',
           click: () => {
-            app.isQuiting = true;
+            isQuitting = true;
             app.quit();
           }
         }
@@ -160,11 +178,41 @@ function createMenu() {
           }
         }
       ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'About',
+          click: () => {
+            mainWindow.webContents.send('show-about');
+          }
+        },
+        {
+          label: 'Check for Updates',
+          click: () => {
+            autoUpdater.checkForUpdates(true);
+          }
+        }
+      ]
     }
   ];
 
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
+}
+
+function checkFirstRunOrUpdate() {
+  const currentVersion = app.getVersion();
+  const lastVersion = store.get('lastVersion');
+  
+  if (!lastVersion || lastVersion !== currentVersion) {
+    // First run or update
+    setTimeout(() => {
+      mainWindow.webContents.send('show-changelog');
+    }, 1000);
+    store.set('lastVersion', currentVersion);
+  }
 }
 
 // IPC Handlers
@@ -194,12 +242,22 @@ ipcMain.handle('get-settings', async () => {
     downloadPath: app.getPath('downloads'),
     autoStart: true,
     soundNotification: true,
-    browserIntegration: true
+    browserIntegration: true,
+    monitoredFileTypes: {
+      documents: true,
+      compressed: true,
+      programs: true,
+      videos: true,
+      music: true,
+      images: true
+    }
   });
 });
 
 ipcMain.handle('save-settings', async (event, settings) => {
   store.set('settings', settings);
+  // Update download manager with new settings
+  downloadManager.updateMonitoredTypes(settings.monitoredFileTypes);
   return true;
 });
 
@@ -218,6 +276,10 @@ ipcMain.handle('open-download-folder', async (event, filePath) => {
   shell.showItemInFolder(filePath);
 });
 
+ipcMain.handle('get-app-version', async () => {
+  return app.getVersion();
+});
+
 // Download progress updates
 downloadManager.on('progress', (downloadId, progress) => {
   mainWindow.webContents.send('download-progress', { downloadId, progress });
@@ -231,7 +293,25 @@ downloadManager.on('error', (downloadId, error) => {
   mainWindow.webContents.send('download-error', { downloadId, error });
 });
 
-app.whenReady().then(createWindow);
+// Auto-updater events
+autoUpdater.on('update-available', (info) => {
+  mainWindow.webContents.send('update-available', info);
+});
+
+// Set as default download handler
+app.setAsDefaultProtocolClient('magnet');
+app.setAsDefaultProtocolClient('thunder');
+
+app.whenReady().then(async () => {
+  // Install browser extensions on first run
+  const extensionsInstalled = store.get('extensionsInstalled');
+  if (!extensionsInstalled) {
+    await installBrowserExtensions();
+    store.set('extensionsInstalled', true);
+  }
+  
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -242,10 +322,12 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (mainWindow === null) {
     createWindow();
+  } else {
+    mainWindow.show();
   }
 });
 
 // Prevent app from quitting when window is closed
 app.on('before-quit', () => {
-  app.isQuiting = true;
+  isQuitting = true;
 });

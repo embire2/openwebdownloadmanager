@@ -76,6 +76,7 @@
             <button class="category-tab" data-category="programs">Programs</button>
             <button class="category-tab" data-category="videos">Videos</button>
             <button class="category-tab" data-category="music">Music</button>
+            <button class="category-tab" data-category="images">Images</button>
         </div>
 
         <!-- Downloads List -->
@@ -160,6 +161,38 @@
                         <label for="sound-notification">Sound notification on completion</label>
                     </div>
                 </div>
+                
+                <div class="settings-section">
+                    <h3>File Type Monitoring</h3>
+                    <p class="settings-note">Select which file types OpenWeb Download Manager should handle:</p>
+                    <div class="file-type-grid">
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="monitor-documents" checked>
+                            <label for="monitor-documents">Documents (PDF, DOC, XLS, PPT)</label>
+                        </div>
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="monitor-compressed" checked>
+                            <label for="monitor-compressed">Compressed (ZIP, RAR, 7Z)</label>
+                        </div>
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="monitor-programs" checked>
+                            <label for="monitor-programs">Programs (EXE, MSI, DMG)</label>
+                        </div>
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="monitor-videos" checked>
+                            <label for="monitor-videos">Videos (MP4, AVI, MKV)</label>
+                        </div>
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="monitor-music" checked>
+                            <label for="monitor-music">Music (MP3, FLAC, WAV)</label>
+                        </div>
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="monitor-images" checked>
+                            <label for="monitor-images">Images (JPG, PNG, GIF)</label>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="settings-section">
                     <h3>Browser Integration</h3>
                     <div class="form-group checkbox">
@@ -167,7 +200,7 @@
                         <label for="browser-integration">Enable browser integration</label>
                     </div>
                     <p class="settings-note">
-                        To enable browser integration, install the OpenWeb Download Manager extension for:
+                        Browser extensions are automatically installed. If you need to reinstall:
                     </p>
                     <div class="browser-links">
                         <a href="#" class="browser-link" onclick="openBrowserExtension('chrome')">
@@ -184,6 +217,96 @@
             <div class="modal-footer">
                 <button class="button secondary" onclick="closeSettingsModal()">Cancel</button>
                 <button class="button primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="about-modal" class="modal">
+        <div class="modal-content about-modal">
+            <div class="modal-header">
+                <h2>About OpenWeb Download Manager</h2>
+                <button class="modal-close" onclick="closeAboutModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="about-content">
+                    <img src="../assets/icon.png" alt="OpenWeb" class="about-logo">
+                    <h3>OpenWeb Download Manager</h3>
+                    <p class="version">Version <span id="app-version">1.0.0-beta</span></p>
+                    <p class="about-text">
+                        OpenWeb Download Manager is a free, open-source download manager created by OpenWeb Software Solutions.
+                    </p>
+                    <p class="about-text">
+                        Visit us at: <a href="#" onclick="window.open('https://software.openweb.co.za', '_blank')">https://software.openweb.co.za</a>
+                    </p>
+                    <div class="about-features">
+                        <h4>Features:</h4>
+                        <ul>
+                            <li>Multi-threaded downloads for faster speeds</li>
+                            <li>Browser integration with Chrome and Firefox</li>
+                            <li>Resume broken downloads</li>
+                            <li>Download scheduling</li>
+                            <li>File type categorization</li>
+                            <li>Open source and free forever</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button primary" onclick="closeAboutModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Changelog Modal -->
+    <div id="changelog-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>What's New in OpenWeb Download Manager</h2>
+                <button class="modal-close" onclick="closeChangelogModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="changelog-content">
+                    <h3>Version 1.0.0 - Beta</h3>
+                    <p class="changelog-date">Released: January 2025</p>
+                    <ul class="changelog-list">
+                        <li><strong>Initial Release:</strong> Welcome to OpenWeb Download Manager!</li>
+                        <li><strong>Multi-threaded Downloads:</strong> Download files up to 10x faster with parallel connections</li>
+                        <li><strong>Browser Integration:</strong> Automatic capture of downloads from Chrome and Firefox</li>
+                        <li><strong>Smart Categorization:</strong> Automatically organize downloads by file type</li>
+                        <li><strong>Resume Support:</strong> Continue interrupted downloads from where they left off</li>
+                        <li><strong>Modern UI:</strong> Clean, intuitive interface with dark mode</li>
+                        <li><strong>System Tray:</strong> Minimize to system tray for background operation</li>
+                        <li><strong>Auto-Update:</strong> Stay up to date with automatic update notifications</li>
+                    </ul>
+                    <p class="changelog-note">
+                        Thank you for choosing OpenWeb Download Manager! We're committed to providing the best free download management experience.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button primary" onclick="closeChangelogModal()">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Modal -->
+    <div id="update-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update Available</h2>
+                <button class="modal-close" onclick="closeUpdateModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="update-content">
+                    <p>A new version of OpenWeb Download Manager is available!</p>
+                    <p class="update-version">Version <span id="update-version"></span></p>
+                    <div class="update-notes" id="update-notes"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button secondary" onclick="closeUpdateModal()">Later</button>
+                <button class="button primary" onclick="downloadUpdate()">Download Update</button>
             </div>
         </div>
     </div>

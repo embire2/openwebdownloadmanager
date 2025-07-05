@@ -16,23 +16,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Settings
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+  
+  // File operations
   selectDownloadFolder: () => ipcRenderer.invoke('select-download-folder'),
   openDownloadFolder: (filePath) => ipcRenderer.invoke('open-download-folder', filePath),
   
+  // App info
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  
   // Event listeners
-  onDownloadProgress: (callback) => {
-    ipcRenderer.on('download-progress', (event, data) => callback(data));
-  },
-  onDownloadCompleted: (callback) => {
-    ipcRenderer.on('download-completed', (event, downloadId) => callback(downloadId));
-  },
-  onDownloadError: (callback) => {
-    ipcRenderer.on('download-error', (event, data) => callback(data));
-  },
-  onShowAddUrl: (callback) => {
-    ipcRenderer.on('show-add-url', () => callback());
-  },
-  onShowBatchDownload: (callback) => {
-    ipcRenderer.on('show-batch-download', () => callback());
-  }
+  onDownloadProgress: (callback) => ipcRenderer.on('download-progress', (event, data) => callback(data)),
+  onDownloadCompleted: (callback) => ipcRenderer.on('download-completed', (event, downloadId) => callback(downloadId)),
+  onDownloadError: (callback) => ipcRenderer.on('download-error', (event, data) => callback(data)),
+  onShowAddUrl: (callback) => ipcRenderer.on('show-add-url', callback),
+  onShowBatchDownload: (callback) => ipcRenderer.on('show-batch-download', callback),
+  onShowAbout: (callback) => ipcRenderer.on('show-about', callback),
+  onShowChangelog: (callback) => ipcRenderer.on('show-changelog', callback),
+  onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (event, info) => callback(info))
 });
