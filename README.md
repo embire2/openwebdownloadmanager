@@ -23,8 +23,8 @@ A powerful, multi-connection download manager for Windows built with Electron. O
 
 2. **Clone and Setup**:
    ```bash
-   git clone https://github.com/yourusername/openweb-download-manager.git
-   cd openweb-download-manager
+   git clone https://github.com/embire2/openwebdownloadmanager.git
+   cd openwebdownloadmanager
    ```
 
 3. **Run Setup**:
