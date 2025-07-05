@@ -1,12 +1,13 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray, shell, dialog, protocol } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, Tray, shell, dialog, protocol, clipboard, globalShortcut, session } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const { DownloadManager } = require('./downloadManager');
 const { autoUpdater } = require('./autoUpdater');
-const { installBrowserExtensions } = require('./extensionInstaller');
+const { SystemIntegration } = require('./systemIntegration');
 
 const store = new Store();
 const downloadManager = new DownloadManager();
+const systemIntegration = new SystemIntegration();
 
 let mainWindow;
 let tray;
@@ -92,6 +93,20 @@ function createTray() {
       }
     },
     {
+      label: 'Enable/Disable Download Capture',
+      type: 'checkbox',
+      checked: store.get('captureEnabled', true),
+      click: (menuItem) => {
+        store.set('captureEnabled', menuItem.checked);
+        if (menuItem.checked) {
+          systemIntegration.enableCapture();
+        } else {
+          systemIntegration.disableCapture();
+        }
+      }
+    },
+    { type: 'separator' },
+    {
       label: 'Quit',
       click: () => {
         isQuitting = true;
@@ -118,6 +133,16 @@ function createMenu() {
           accelerator: 'CmdOrCtrl+N',
           click: () => {
             mainWindow.webContents.send('show-add-url');
+          }
+        },
+        {
+          label: 'Add from Clipboard',
+          accelerator: 'CmdOrCtrl+V',
+          click: () => {
+            const clipboardText = clipboard.readText();
+            if (clipboardText && (clipboardText.startsWith('http://') || clipboardText.startsWith('https://'))) {
+              mainWindow.webContents.send('add-url-from-clipboard', clipboardText);
+            }
           }
         },
         {
@@ -215,6 +240,59 @@ function checkFirstRunOrUpdate() {
   }
 }
 
+// Set up download interception
+function setupDownloadInterception() {
+  // Intercept all download requests from all webContents
+  app.on('web-contents-created', (event, contents) => {
+    contents.session.on('will-download', (event, item, webContents) => {
+      // Prevent default download behavior
+      event.preventDefault();
+      
+      const url = item.getURL();
+      const fileName = item.getFilename();
+      
+      // Check if we should handle this download
+      if (store.get('captureEnabled', true) && downloadManager.shouldHandleFileType(fileName)) {
+        // Add to our download manager
+        downloadManager.addDownload({
+          url: url,
+          fileName: fileName,
+          downloadPath: store.get('settings.downloadPath', app.getPath('downloads'))
+        }).then(result => {
+          if (result.success) {
+            mainWindow.show();
+            mainWindow.webContents.send('download-added', result.download);
+          }
+        });
+      } else {
+        // Let the system handle it
+        item.savePath = path.join(app.getPath('downloads'), fileName);
+      }
+    });
+  });
+
+  // Monitor clipboard for URLs
+  let lastClipboard = '';
+  setInterval(() => {
+    const currentClipboard = clipboard.readText();
+    if (currentClipboard !== lastClipboard && 
+        (currentClipboard.startsWith('http://') || currentClipboard.startsWith('https://'))) {
+      lastClipboard = currentClipboard;
+      
+      // Check if it's a downloadable file
+      const urlParts = currentClipboard.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      
+      if (fileName && fileName.includes('.') && 
+          store.get('captureEnabled', true) && 
+          downloadManager.shouldHandleFileType(fileName)) {
+        // Show notification or add to queue
+        mainWindow.webContents.send('clipboard-url-detected', currentClipboard);
+      }
+    }
+  }, 1000);
+}
+
 // IPC Handlers
 ipcMain.handle('add-download', async (event, downloadInfo) => {
   return downloadManager.addDownload(downloadInfo);
@@ -243,6 +321,8 @@ ipcMain.handle('get-settings', async () => {
     autoStart: true,
     soundNotification: true,
     browserIntegration: true,
+    captureEnabled: true,
+    monitorClipboard: true,
     monitoredFileTypes: {
       documents: true,
       compressed: true,
@@ -298,19 +378,37 @@ autoUpdater.on('update-available', (info) => {
   mainWindow.webContents.send('update-available', info);
 });
 
-// Set as default download handler
+// Set as default protocol handlers
+app.setAsDefaultProtocolClient('http');
+app.setAsDefaultProtocolClient('https');
+app.setAsDefaultProtocolClient('ftp');
 app.setAsDefaultProtocolClient('magnet');
 app.setAsDefaultProtocolClient('thunder');
 
-app.whenReady().then(async () => {
-  // Install browser extensions on first run
-  const extensionsInstalled = store.get('extensionsInstalled');
-  if (!extensionsInstalled) {
-    await installBrowserExtensions();
-    store.set('extensionsInstalled', true);
+// Handle protocol launches
+app.on('open-url', (event, url) => {
+  event.preventDefault();
+  if (mainWindow) {
+    mainWindow.show();
+    mainWindow.webContents.send('handle-protocol-url', url);
   }
+});
+
+app.whenReady().then(async () => {
+  // Set up system integration
+  await systemIntegration.setup();
+  
+  // Register global shortcuts
+  globalShortcut.register('CommandOrControl+Alt+D', () => {
+    mainWindow.show();
+    const clipboardText = clipboard.readText();
+    if (clipboardText && (clipboardText.startsWith('http://') || clipboardText.startsWith('https://'))) {
+      mainWindow.webContents.send('add-url-from-clipboard', clipboardText);
+    }
+  });
   
   createWindow();
+  setupDownloadInterception();
 });
 
 app.on('window-all-closed', () => {
@@ -330,4 +428,12 @@ app.on('activate', () => {
 // Prevent app from quitting when window is closed
 app.on('before-quit', () => {
   isQuitting = true;
+});
+
+app.on('will-quit', () => {
+  // Unregister all shortcuts
+  globalShortcut.unregisterAll();
+  
+  // Clean up system integration
+  systemIntegration.cleanup();
 });

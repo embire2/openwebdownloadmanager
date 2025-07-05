@@ -1,66 +1,101 @@
 # OpenWeb Download Manager
 
-## App Icon and Logo Requirements
+A powerful, modern download manager with multi-connection acceleration and system-level download interception.
 
-To properly brand OpenWeb Download Manager, you need to provide the following icon files:
+## Version 1.0.1 Features
 
-### Windows Icons
-1. **icon.ico** - Windows icon file containing multiple resolutions:
-   - 16x16 pixels
-   - 32x32 pixels
-   - 48x48 pixels
-   - 256x256 pixels
+### 🚀 Key Features
+- **No Browser Extension Required** - Works with all browsers automatically
+- **System-Level Download Interception** - Captures downloads before other managers (including IDM)
+- **Multi-Connection Downloads** - Accelerate downloads with up to 32 simultaneous connections
+- **Smart File Management** - Automatic categorization of downloads
+- **Resume Support** - Continue interrupted downloads from where they left off
+- **Clipboard Monitoring** - Automatically detect download URLs from clipboard
+- **Global Hotkey** - Press `Ctrl+Alt+D` to quickly add downloads
 
-### PNG Icons (for all platforms)
-Place these in the `assets` folder:
+### 🎯 What's New in v1.0.1
+- Standalone operation without browser extensions
+- Windows Registry integration for protocol handling
+- Priority handling over Internet Download Manager (IDM)
+- System-wide download capture
+- Enhanced clipboard monitoring
+- Administrator privileges for better system integration
 
-1. **icon.png** - Main icon (512x512 pixels) - Used as the base icon
-2. **icon@2x.png** - Retina display icon (1024x1024 pixels)
-3. **icon-16.png** - Small icon (16x16 pixels)
-4. **icon-32.png** - Medium icon (32x32 pixels)
-5. **icon-64.png** - Large icon (64x64 pixels)
-6. **icon-128.png** - Extra large icon (128x128 pixels)
-7. **icon-256.png** - Extra extra large icon (256x256 pixels)
+## System Requirements
 
-### Browser Extension Icons
-Place these in the respective browser extension folders:
+- Windows 10/11 (64-bit)
+- Administrator privileges (for system integration)
+- 4GB RAM minimum
+- 100MB free disk space
 
-For Chrome (`browser-extensions/chrome/`):
-- **icon16.png** - 16x16 pixels
-- **icon48.png** - 48x48 pixels
-- **icon128.png** - 128x128 pixels
+## Installation
 
-For Firefox (`browser-extensions/firefox/`):
-- **icon16.png** - 16x16 pixels
-- **icon48.png** - 48x48 pixels
-- **icon128.png** - 128x128 pixels
+1. Download the latest installer from [OpenWeb Software Solutions](https://software.openweb.co.za/odm/)
+2. Run the installer with administrator privileges
+3. Follow the installation wizard
+4. The app will automatically configure system integration
 
-### Icon Design Guidelines
-- Use a clean, modern design that represents downloading/file transfer
-- Include the OpenWeb branding if applicable
-- Ensure the icon is recognizable at small sizes
-- Use the color scheme: Primary #9E7FFF (purple) with accents
-- Transparent background for PNG files
-- High contrast for visibility on different backgrounds
+## Usage
 
-### Additional Assets Needed
-1. **chrome.png** - Chrome browser logo (32x32 pixels)
-2. **firefox.png** - Firefox browser logo (32x32 pixels)
-3. **complete.mp3** - Notification sound for completed downloads (1-2 seconds)
+### Automatic Download Capture
+Once installed, OpenWeb Download Manager automatically intercepts downloads from any browser. No configuration needed!
 
-## Features Implemented
+### Adding Downloads Manually
+- **From Clipboard**: Press `Ctrl+Alt+D` or click "Add from Clipboard" in the menu
+- **Direct URL**: Click "Add URL" button or press `Ctrl+N`
+- **Batch Downloads**: Use `Ctrl+B` for multiple URLs
 
-- ✅ Automatic browser extension installation during setup
-- ✅ File type monitoring settings with popular file types
-- ✅ About page with company information
-- ✅ Auto-update feature monitoring OpenWeb Software Solutions
-- ✅ Changelog popup for new versions
-- ✅ System tray minimize on close (fixed)
-- ✅ Download manager takes preference over other managers
+### Managing Downloads
+- **Pause/Resume**: Control individual downloads or all at once
+- **Categories**: Filter downloads by type (Documents, Videos, Music, etc.)
+- **Speed Limit**: Set bandwidth limits per download
+- **Scheduling**: Queue downloads for later
 
-## Building the Application
+### Settings
+Access settings to configure:
+- Maximum connections per download (1-32)
+- Default download location
+- File type monitoring
+- Sound notifications
+- Clipboard monitoring
+- Download capture enable/disable
 
+## Icon and Asset Requirements
+
+### Application Icons
+Place these files in the `assets` folder:
+
+1. **icon.ico** - Windows icon (16x16, 32x32, 48x48, 256x256)
+2. **icon.png** - Main icon (512x512)
+3. **icon@2x.png** - Retina display (1024x1024)
+4. **icon-16.png** - Small icon (16x16)
+5. **icon-32.png** - Medium icon (32x32)
+6. **icon-64.png** - Large icon (64x64)
+7. **icon-128.png** - Extra large icon (128x128)
+8. **icon-256.png** - Extra extra large icon (256x256)
+
+### Additional Assets
+1. **complete.mp3** - Notification sound for completed downloads
+
+### Design Guidelines
+- Use OpenWeb brand colors: Primary #9E7FFF (purple)
+- Clean, modern design representing download/transfer
+- High contrast for visibility
+- Transparent PNG backgrounds
+
+## Building from Source
+
+### Prerequisites
+- Node.js 18+ and npm
+- Windows build tools
+- Administrator access
+
+### Build Steps
 ```bash
+# Clone the repository
+git clone https://github.com/openweb/download-manager.git
+cd download-manager
+
 # Install dependencies
 npm install
 
@@ -70,10 +105,49 @@ npm run dev
 # Build for Windows
 npm run build-win
 
-# Build for all platforms
+# Create installer
 npm run dist
 ```
 
-## Version Information
-Current Version: 1.0.0-beta
-Update URL: https://software.openweb.co.za/odm/
+## Troubleshooting
+
+### Downloads not being captured
+1. Ensure the app is running with administrator privileges
+2. Check if "Enable download capture" is turned on in settings or system tray
+3. Restart the app after installation
+
+### Conflict with other download managers
+- OpenWeb Download Manager automatically takes priority over IDM and other managers
+- You can disable capture temporarily from the system tray menu
+
+### Downloads failing
+- Check your internet connection
+- Verify the download URL is valid
+- Ensure you have write permissions to the download folder
+
+## Privacy & Security
+
+- No data collection or tracking
+- All downloads are handled locally
+- No external servers except for update checks
+- Open source and transparent
+
+## Support
+
+- **Website**: [software.openweb.co.za](https://software.openweb.co.za)
+- **Email**: support@openweb.co.za
+- **Documentation**: [docs.openweb.co.za/odm](https://docs.openweb.co.za/odm)
+
+## License
+
+© 2025 OpenWeb Software Solutions. All rights reserved.
+
+Licensed under the MIT License. See LICENSE file for details.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
+
+---
+
+**OpenWeb Download Manager** - Accelerate your downloads, simplify your life.

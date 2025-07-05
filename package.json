@@ -1,6 +1,6 @@
 {
   "name": "openweb-download-manager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "OpenWeb Download Manager - Advanced download accelerator",
   "main": "src/main.js",
   "scripts": {
@@ -20,7 +20,9 @@
     "axios": "^1.6.5",
     "electron-store": "^8.1.0",
     "node-downloader-helper": "^2.1.9",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "winreg": "^1.2.4",
+    "node-global-proxy": "^1.0.1"
   },
   "build": {
     "appId": "com.openweb.downloadmanager",
@@ -30,13 +32,15 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.ico"
+      "icon": "assets/icon.ico",
+      "requestedExecutionLevel": "requireAdministrator"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "perMachine": true
     }
   }
 }

@@ -1,316 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenWeb Download Manager</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenWeb Download Manager</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Custom Title Bar -->
-        <div class="title-bar">
-            <div class="title-bar-left">
-                <img src="../assets/icon.png" alt="OpenWeb" class="app-icon">
-                <span class="app-title">OpenWeb Download Manager</span>
-            </div>
-            <div class="title-bar-controls">
-                <button class="title-bar-button" id="minimize-btn">
-                    <svg width="10" height="1" viewBox="0 0 10 1">
-                        <rect width="10" height="1" fill="currentColor"/>
-                    </svg>
-                </button>
-                <button class="title-bar-button" id="maximize-btn">
-                    <svg width="10" height="10" viewBox="0 0 10 10">
-                        <rect width="10" height="10" fill="none" stroke="currentColor" stroke-width="1"/>
-                    </svg>
-                </button>
-                <button class="title-bar-button close" id="close-btn">
-                    <svg width="10" height="10" viewBox="0 0 10 10">
-                        <path d="M0 0 L10 10 M10 0 L0 10" stroke="currentColor" stroke-width="1"/>
-                    </svg>
-                </button>
-            </div>
+  <div class="app-container">
+    <!-- Custom Title Bar -->
+    <div class="title-bar">
+      <div class="title-bar-content">
+        <div class="app-title">
+          <img src="../assets/icon.png" alt="OpenWeb" class="app-icon">
+          <span>OpenWeb Download Manager</span>
+          <span class="app-version">v1.0.1</span>
         </div>
-
-        <!-- Main Toolbar -->
-        <div class="toolbar">
-            <button class="toolbar-button primary" id="add-url-btn">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
-                </svg>
-                Add URL
-            </button>
-            <button class="toolbar-button" id="resume-all-btn">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" fill="currentColor"/>
-                </svg>
-                Resume All
-            </button>
-            <button class="toolbar-button" id="pause-all-btn">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="currentColor"/>
-                </svg>
-                Pause All
-            </button>
-            <button class="toolbar-button" id="stop-all-btn">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
-                </svg>
-                Stop All
-            </button>
-            <div class="toolbar-spacer"></div>
-            <button class="toolbar-button" id="settings-btn">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" fill="currentColor"/>
-                </svg>
-                Settings
-            </button>
+        <div class="window-controls">
+          <button id="minimize-btn" class="window-btn">─</button>
+          <button id="maximize-btn" class="window-btn">□</button>
+          <button id="close-btn" class="window-btn close">×</button>
         </div>
-
-        <!-- Category Tabs -->
-        <div class="category-tabs">
-            <button class="category-tab active" data-category="all">All Downloads</button>
-            <button class="category-tab" data-category="documents">Documents</button>
-            <button class="category-tab" data-category="compressed">Compressed</button>
-            <button class="category-tab" data-category="programs">Programs</button>
-            <button class="category-tab" data-category="videos">Videos</button>
-            <button class="category-tab" data-category="music">Music</button>
-            <button class="category-tab" data-category="images">Images</button>
-        </div>
-
-        <!-- Downloads List -->
-        <div class="downloads-container">
-            <div id="downloads-list" class="downloads-list">
-                <!-- Downloads will be dynamically added here -->
-            </div>
-        </div>
-
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <span id="status-text">Ready</span>
-            <span class="status-separator">|</span>
-            <span id="active-downloads">0 Active Downloads</span>
-            <span class="status-separator">|</span>
-            <span id="total-speed">0 KB/s</span>
-        </div>
+      </div>
     </div>
 
-    <!-- Add URL Modal -->
-    <div id="add-url-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Add New Download</h2>
-                <button class="modal-close" onclick="closeAddUrlModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="download-url">URL:</label>
-                    <input type="text" id="download-url" placeholder="https://example.com/file.zip" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label for="download-filename">Save as:</label>
-                    <input type="text" id="download-filename" placeholder="file.zip" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label for="download-connections">Connections:</label>
-                    <input type="number" id="download-connections" value="10" min="1" max="32" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Download Path:</label>
-                    <div class="path-selector">
-                        <input type="text" id="download-path" readonly class="form-input">
-                        <button class="browse-button" onclick="selectDownloadPath()">Browse</button>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="button secondary" onclick="closeAddUrlModal()">Cancel</button>
-                <button class="button primary" onclick="addDownload()">Start Download</button>
-            </div>
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <nav class="nav-menu">
+          <div class="nav-item active" data-view="downloads">
+            <span class="nav-icon">📥</span>
+            <span class="nav-text">Downloads</span>
+          </div>
+          <div class="nav-item" data-view="settings">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">Settings</span>
+          </div>
+          <div class="nav-item" data-view="about">
+            <span class="nav-icon">ℹ️</span>
+            <span class="nav-text">About</span>
+          </div>
+        </nav>
+        
+        <div class="sidebar-footer">
+          <button class="btn btn-primary" onclick="showAddUrlDialog()">
+            <span class="btn-icon">➕</span>
+            Add URL
+          </button>
         </div>
-    </div>
+      </div>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Settings</h2>
-                <button class="modal-close" onclick="closeSettingsModal()">×</button>
+      <!-- Content Area -->
+      <div class="content-area">
+        <!-- Downloads View -->
+        <div id="downloads-view" class="view-content active">
+          <div class="view-header">
+            <h2>Downloads</h2>
+            <div class="category-filters">
+              <button class="category-btn active" data-category="all">All</button>
+              <button class="category-btn" data-category="documents">Documents</button>
+              <button class="category-btn" data-category="videos">Videos</button>
+              <button class="category-btn" data-category="music">Music</button>
+              <button class="category-btn" data-category="images">Images</button>
+              <button class="category-btn" data-category="compressed">Compressed</button>
+              <button class="category-btn" data-category="programs">Programs</button>
             </div>
-            <div class="modal-body">
-                <div class="settings-section">
-                    <h3>General</h3>
-                    <div class="form-group">
-                        <label for="max-connections">Default Connections per Download:</label>
-                        <input type="number" id="max-connections" value="10" min="1" max="32" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label for="default-download-path">Default Download Path:</label>
-                        <div class="path-selector">
-                            <input type="text" id="default-download-path" readonly class="form-input">
-                            <button class="browse-button" onclick="selectDefaultPath()">Browse</button>
-                        </div>
-                    </div>
-                    <div class="form-group checkbox">
-                        <input type="checkbox" id="auto-start" checked>
-                        <label for="auto-start">Start downloads automatically</label>
-                    </div>
-                    <div class="form-group checkbox">
-                        <input type="checkbox" id="sound-notification" checked>
-                        <label for="sound-notification">Sound notification on completion</label>
-                    </div>
-                </div>
-                
-                <div class="settings-section">
-                    <h3>File Type Monitoring</h3>
-                    <p class="settings-note">Select which file types OpenWeb Download Manager should handle:</p>
-                    <div class="file-type-grid">
-                        <div class="form-group checkbox">
-                            <input type="checkbox" id="monitor-documents" checked>
-                            <label for="monitor-documents">Documents (PDF, DOC, XLS, PPT)</label>
-                        </div>
-                        <div class="form-group checkbox">
-                            <input type="checkbox" id="monitor-compressed" checked>
-                            <label for="monitor-compressed">Compressed (ZIP, RAR, 7Z)</label>
-                        </div>
-                        <div class="form-group checkbox">
-                            <input type="checkbox" id="monitor-programs" checked>
-                            <label for="monitor-programs">Programs (EXE, MSI, DMG)</label>
-                        </div>
-                        <div class="form-group checkbox">
-                            <input type="checkbox" id="monitor-videos" checked>
-                            <label for="monitor-videos">Videos (MP4, AVI, MKV)</label>
-                        </div>
-                        <div class="form-group checkbox">
-                            <input type="checkbox" id="monitor-music" checked>
-                            <label for="monitor-music">Music (MP3, FLAC, WAV)</label>
-                        </div>
-                        <div class="form-group checkbox">
-                            <input type="checkbox" id="monitor-images" checked>
-                            <label for="monitor-images">Images (JPG, PNG, GIF)</label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="settings-section">
-                    <h3>Browser Integration</h3>
-                    <div class="form-group checkbox">
-                        <input type="checkbox" id="browser-integration" checked>
-                        <label for="browser-integration">Enable browser integration</label>
-                    </div>
-                    <p class="settings-note">
-                        Browser extensions are automatically installed. If you need to reinstall:
-                    </p>
-                    <div class="browser-links">
-                        <a href="#" class="browser-link" onclick="openBrowserExtension('chrome')">
-                            <img src="../assets/chrome.png" alt="Chrome">
-                            Chrome Extension
-                        </a>
-                        <a href="#" class="browser-link" onclick="openBrowserExtension('firefox')">
-                            <img src="../assets/firefox.png" alt="Firefox">
-                            Firefox Add-on
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="button secondary" onclick="closeSettingsModal()">Cancel</button>
-                <button class="button primary" onclick="saveSettings()">Save Settings</button>
-            </div>
+          </div>
+          
+          <div id="downloads-list" class="downloads-list">
+            <!-- Downloads will be populated here -->
+          </div>
         </div>
-    </div>
 
-    <!-- About Modal -->
-    <div id="about-modal" class="modal">
-        <div class="modal-content about-modal">
-            <div class="modal-header">
-                <h2>About OpenWeb Download Manager</h2>
-                <button class="modal-close" onclick="closeAboutModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="about-content">
-                    <img src="../assets/icon.png" alt="OpenWeb" class="about-logo">
-                    <h3>OpenWeb Download Manager</h3>
-                    <p class="version">Version <span id="app-version">1.0.0-beta</span></p>
-                    <p class="about-text">
-                        OpenWeb Download Manager is a free, open-source download manager created by OpenWeb Software Solutions.
-                    </p>
-                    <p class="about-text">
-                        Visit us at: <a href="#" onclick="window.open('https://software.openweb.co.za', '_blank')">https://software.openweb.co.za</a>
-                    </p>
-                    <div class="about-features">
-                        <h4>Features:</h4>
-                        <ul>
-                            <li>Multi-threaded downloads for faster speeds</li>
-                            <li>Browser integration with Chrome and Firefox</li>
-                            <li>Resume broken downloads</li>
-                            <li>Download scheduling</li>
-                            <li>File type categorization</li>
-                            <li>Open source and free forever</li>
-                        </ul>
-                    </div>
+        <!-- Settings View -->
+        <div id="settings-view" class="view-content">
+          <div class="view-header">
+            <h2>Settings</h2>
+          </div>
+          
+          <div class="settings-content">
+            <div class="settings-section">
+              <h3>General Settings</h3>
+              <div class="setting-item">
+                <label for="max-connections">Max Connections per Download</label>
+                <input type="number" id="max-connections" min="1" max="32" value="10">
+              </div>
+              
+              <div class="setting-item">
+                <label for="download-path">Default Download Path</label>
+                <div class="path-selector">
+                  <input type="text" id="download-path" readonly>
+                  <button class="btn btn-secondary" onclick="selectDownloadFolder()">Browse</button>
                 </div>
+              </div>
+              
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="auto-start">
+                  Start downloads automatically
+                </label>
+              </div>
+              
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="sound-notification">
+                  Play sound when download completes
+                </label>
+              </div>
+              
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="capture-enabled">
+                  Enable download capture (intercept downloads from browsers)
+                </label>
+              </div>
+              
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="monitor-clipboard">
+                  Monitor clipboard for download URLs
+                </label>
+              </div>
             </div>
-            <div class="modal-footer">
-                <button class="button primary" onclick="closeAboutModal()">Close</button>
+            
+            <div class="settings-section">
+              <h3>File Type Monitoring</h3>
+              <p class="settings-description">Select which file types to automatically capture:</p>
+              
+              <div class="file-types-grid">
+                <label>
+                  <input type="checkbox" id="monitor-documents" checked>
+                  Documents (PDF, DOC, TXT)
+                </label>
+                <label>
+                  <input type="checkbox" id="monitor-compressed" checked>
+                  Compressed (ZIP, RAR, 7Z)
+                </label>
+                <label>
+                  <input type="checkbox" id="monitor-programs" checked>
+                  Programs (EXE, MSI, DMG)
+                </label>
+                <label>
+                  <input type="checkbox" id="monitor-videos" checked>
+                  Videos (MP4, AVI, MKV)
+                </label>
+                <label>
+                  <input type="checkbox" id="monitor-music" checked>
+                  Music (MP3, FLAC, WAV)
+                </label>
+                <label>
+                  <input type="checkbox" id="monitor-images" checked>
+                  Images (JPG, PNG, GIF)
+                </label>
+              </div>
             </div>
+            
+            <div class="settings-actions">
+              <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+          </div>
         </div>
-    </div>
 
-    <!-- Changelog Modal -->
-    <div id="changelog-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>What's New in OpenWeb Download Manager</h2>
-                <button class="modal-close" onclick="closeChangelogModal()">×</button>
+        <!-- About View -->
+        <div id="about-view" class="view-content">
+          <div class="view-header">
+            <h2>About</h2>
+          </div>
+          
+          <div class="about-content">
+            <div class="about-logo">
+              <img src="../assets/icon.png" alt="OpenWeb Download Manager">
             </div>
-            <div class="modal-body">
-                <div class="changelog-content">
-                    <h3>Version 1.0.0 - Beta</h3>
-                    <p class="changelog-date">Released: January 2025</p>
-                    <ul class="changelog-list">
-                        <li><strong>Initial Release:</strong> Welcome to OpenWeb Download Manager!</li>
-                        <li><strong>Multi-threaded Downloads:</strong> Download files up to 10x faster with parallel connections</li>
-                        <li><strong>Browser Integration:</strong> Automatic capture of downloads from Chrome and Firefox</li>
-                        <li><strong>Smart Categorization:</strong> Automatically organize downloads by file type</li>
-                        <li><strong>Resume Support:</strong> Continue interrupted downloads from where they left off</li>
-                        <li><strong>Modern UI:</strong> Clean, intuitive interface with dark mode</li>
-                        <li><strong>System Tray:</strong> Minimize to system tray for background operation</li>
-                        <li><strong>Auto-Update:</strong> Stay up to date with automatic update notifications</li>
-                    </ul>
-                    <p class="changelog-note">
-                        Thank you for choosing OpenWeb Download Manager! We're committed to providing the best free download management experience.
-                    </p>
-                </div>
+            
+            <h1>OpenWeb Download Manager</h1>
+            <p class="version">Version 1.0.1</p>
+            
+            <div class="about-section">
+              <h3>Advanced Download Accelerator</h3>
+              <p>OpenWeb Download Manager is a powerful, modern download manager that accelerates your downloads with multi-connection technology and smart file management.</p>
             </div>
-            <div class="modal-footer">
-                <button class="button primary" onclick="closeChangelogModal()">Got it!</button>
+            
+            <div class="about-section">
+              <h3>Features</h3>
+              <ul>
+                <li>✓ System-level download interception</li>
+                <li>✓ Multi-connection download acceleration</li>
+                <li>✓ Smart file categorization</li>
+                <li>✓ Resume broken downloads</li>
+                <li>✓ Clipboard monitoring</li>
+                <li>✓ No browser extension required</li>
+              </ul>
             </div>
+            
+            <div class="about-section">
+              <h3>Developed by</h3>
+              <p><strong>OpenWeb Software Solutions</strong></p>
+              <p>Leading provider of innovative software solutions</p>
+              <p>Website: <a href="#" onclick="window.open('https://software.openweb.co.za')">software.openweb.co.za</a></p>
+            </div>
+            
+            <div class="about-section">
+              <p class="copyright">© 2025 OpenWeb Software Solutions. All rights reserved.</p>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Update Modal -->
-    <div id="update-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Update Available</h2>
-                <button class="modal-close" onclick="closeUpdateModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="update-content">
-                    <p>A new version of OpenWeb Download Manager is available!</p>
-                    <p class="update-version">Version <span id="update-version"></span></p>
-                    <div class="update-notes" id="update-notes"></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="button secondary" onclick="closeUpdateModal()">Later</button>
-                <button class="button primary" onclick="downloadUpdate()">Download Update</button>
-            </div>
-        </div>
+  <!-- Add URL Dialog -->
+  <div id="add-url-dialog" class="dialog-overlay" style="display: none;">
+    <div class="dialog">
+      <div class="dialog-header">
+        <h3>Add Download URL</h3>
+        <button class="close-btn" onclick="hideAddUrlDialog()">×</button>
+      </div>
+      <div class="dialog-content">
+        <input type="url" id="url-input" placeholder="Enter URL to download..." class="url-input">
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-secondary" onclick="hideAddUrlDialog()">Cancel</button>
+        <button class="btn btn-primary" onclick="addDownload()">Add Download</button>
+      </div>
     </div>
+  </div>
 
-    <script src="renderer.js"></script>
+  <script src="renderer.js"></script>
 </body>
 </html>
